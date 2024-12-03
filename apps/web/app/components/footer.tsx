@@ -1,5 +1,5 @@
-import { Status } from '@repo/design-system/components/status';
-import { docsUrl } from '@repo/design-system/lib/consts';
+import { env } from '@repo/env';
+import { Status } from '@repo/observability/status';
 import Link from 'next/link';
 
 export const Footer = () => {
@@ -16,10 +16,6 @@ export const Footer = () => {
         {
           title: 'Blog',
           href: '/blog',
-        },
-        {
-          title: 'Docs',
-          href: docsUrl,
         },
       ],
     },
@@ -42,6 +38,13 @@ export const Footer = () => {
       ],
     },
   ];
+
+  if (env.NEXT_PUBLIC_DOCS_URL) {
+    navigationItems.at(1)?.items?.push({
+      title: 'Docs',
+      href: env.NEXT_PUBLIC_DOCS_URL,
+    });
+  }
 
   return (
     <section className="dark border-foreground/10 border-t">

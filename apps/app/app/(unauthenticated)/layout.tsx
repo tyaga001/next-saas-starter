@@ -1,10 +1,14 @@
 import { ModeToggle } from '@repo/design-system/components/mode-toggle';
-import { webUrl } from '@repo/design-system/lib/consts';
+import { env } from '@repo/env';
 import { CommandIcon } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-const AuthLayout = ({ children }: { children: ReactNode }) => (
+type AuthLayoutProps = {
+  readonly children: ReactNode;
+};
+
+const AuthLayout = ({ children }: AuthLayoutProps) => (
   <div className="container relative grid h-dvh flex-col items-center justify-center lg:max-w-none lg:grid-cols-2 lg:px-0">
     <div className="relative hidden h-full flex-col bg-muted p-10 text-white lg:flex dark:border-r">
       <div className="absolute inset-0 bg-zinc-900" />
@@ -32,14 +36,14 @@ const AuthLayout = ({ children }: { children: ReactNode }) => (
         <p className="px-8 text-center text-muted-foreground text-sm">
           By clicking continue, you agree to our{' '}
           <Link
-            href={new URL('/legal/terms', webUrl).toString()}
+            href={new URL('/legal/terms', env.NEXT_PUBLIC_WEB_URL).toString()}
             className="underline underline-offset-4 hover:text-primary"
           >
             Terms of Service
           </Link>{' '}
           and{' '}
           <Link
-            href={new URL('/legal/privacy', webUrl).toString()}
+            href={new URL('/legal/privacy', env.NEXT_PUBLIC_WEB_URL).toString()}
             className="underline underline-offset-4 hover:text-primary"
           >
             Privacy Policy

@@ -1,6 +1,6 @@
 'use client';
 
-import { OrganizationSwitcher, UserButton } from '@clerk/nextjs';
+import { OrganizationSwitcher, UserButton } from '@repo/auth/client';
 import { ModeToggle } from '@repo/design-system/components/mode-toggle';
 import {
   Collapsible,
@@ -34,6 +34,7 @@ import {
 } from '@repo/design-system/components/ui/sidebar';
 import { cn } from '@repo/design-system/lib/utils';
 import {
+  AnchorIcon,
   BookOpenIcon,
   BotIcon,
   ChevronRightIcon,
@@ -149,6 +150,11 @@ const data = {
     },
   ],
   navSecondary: [
+    {
+      title: 'Webhooks',
+      url: '/webhooks',
+      icon: AnchorIcon,
+    },
     {
       title: 'Support',
       url: '#',
@@ -319,7 +325,7 @@ export const GlobalSidebar = ({ children }: GlobalSidebarProperties) => {
                 showName
                 appearance={{
                   elements: {
-                    rootBox: 'flex overflow-hidden',
+                    rootBox: 'flex overflow-hidden w-full',
                     userButtonBox: 'flex-row-reverse',
                     userButtonOuterIdentifier: 'truncate pl-0',
                   },

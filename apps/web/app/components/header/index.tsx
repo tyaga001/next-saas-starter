@@ -10,8 +10,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from '@repo/design-system/components/ui/navigation-menu';
-import { appUrl } from '@repo/design-system/lib/consts';
-import { docsUrl } from '@repo/design-system/lib/consts';
+import { env } from '@repo/env';
 import { Menu, MoveRight, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -53,12 +52,15 @@ export const Header = () => {
       href: '/blog',
       description: '',
     },
-    {
-      title: 'Docs',
-      href: docsUrl,
-      description: '',
-    },
   ];
+
+  if (env.NEXT_PUBLIC_DOCS_URL) {
+    navigationItems.push({
+      title: 'Docs',
+      href: env.NEXT_PUBLIC_DOCS_URL,
+      description: '',
+    });
+  }
 
   const [isOpen, setOpen] = useState(false);
   return (
@@ -96,10 +98,10 @@ export const Header = () => {
                             </Button>
                           </div>
                           <div className="flex h-full flex-col justify-end text-sm">
-                            {item.items?.map((subItem) => (
+                            {item.items?.map((subItem, idx) => (
                               <NavigationMenuLink
                                 href={subItem.href}
-                                key={subItem.title}
+                                key={idx}
                                 className="flex flex-row items-center justify-between rounded px-4 py-2 hover:bg-muted"
                               >
                                 <span>{subItem.title}</span>
@@ -131,12 +133,14 @@ export const Header = () => {
             <Link href="/contact">Contact us</Link>
           </Button>
           <div className="hidden border-r md:inline" />
-          <ModeToggle />
-          <Button variant="outline" asChild>
-            <Link href={`${appUrl}/sign-in`}>Sign in</Link>
+          <div className="hidden md:inline">
+            <ModeToggle />
+          </div>
+          <Button variant="outline" asChild className="hidden md:inline">
+            <Link href={`${env.NEXT_PUBLIC_APP_URL}/sign-in`}>Sign in</Link>
           </Button>
           <Button asChild>
-            <Link href={`${appUrl}/sign-up`}>Get started</Link>
+            <Link href={`${env.NEXT_PUBLIC_APP_URL}/sign-up`}>Get started</Link>
           </Button>
         </div>
         <div className="flex w-12 shrink items-end justify-end lg:hidden">

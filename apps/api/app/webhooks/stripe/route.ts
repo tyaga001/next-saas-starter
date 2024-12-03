@@ -1,17 +1,23 @@
-import { clerkClient } from '@clerk/nextjs/server';
-import { log } from '@logtail/next';
-import { analytics } from '@repo/design-system/lib/analytics/server';
-import { parseError } from '@repo/design-system/lib/error';
-import { stripe } from '@repo/design-system/lib/stripe';
+import { analytics } from '@repo/analytics/posthog/server';
+import { clerkClient } from '@repo/auth/server';
+import { env } from '@repo/env';
+import { parseError } from '@repo/observability/error';
+import { log } from '@repo/observability/log';
+import { stripe } from '@repo/payments';
+import type { Stripe } from '@repo/payments';
 import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import type Stripe from 'stripe';
 
-const secret = process.env.STRIPE_WEBHOOK_SECRET;
+const getUserFromCustomerId = async (customerId: string) => {
+  const clerk = await clerkClient();
+  const users = await clerk.users.getUserList();
 
-if (!secret) {
-  throw new Error('STRIPE_WEBHOOK_SECRET is not set');
-}
+  const user = users.data.find(
+    (user) => user.privateMetadata.stripeCustomerId === customerId
+  );
+
+  return user;
+};
 
 const handleCheckoutSessionCompleted = async (
   data: Stripe.Checkout.Session
@@ -20,14 +26,9 @@ const handleCheckoutSessionCompleted = async (
     return;
   }
 
-  const clerk = await clerkClient();
   const customerId =
     typeof data.customer === 'string' ? data.customer : data.customer.id;
-  const users = await clerk.users.getUserList();
-
-  const user = users.data.find(
-    (user) => user.privateMetadata.stripeCustomerId === customerId
-  );
+  const user = await getUserFromCustomerId(customerId);
 
   if (!user) {
     return;
@@ -46,14 +47,9 @@ const handleSubscriptionScheduleCanceled = async (
     return;
   }
 
-  const clerk = await clerkClient();
   const customerId =
     typeof data.customer === 'string' ? data.customer : data.customer.id;
-  const users = await clerk.users.getUserList();
-
-  const user = users.data.find(
-    (user) => user.privateMetadata.stripeCustomerId === customerId
-  );
+  const user = await getUserFromCustomerId(customerId);
 
   if (!user) {
     return;
@@ -66,6 +62,10 @@ const handleSubscriptionScheduleCanceled = async (
 };
 
 export const POST = async (request: Request): Promise<Response> => {
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ message: 'Not configured', ok: false });
+  }
+
   try {
     const body = await request.text();
     const headerPayload = await headers();
@@ -75,7 +75,11 @@ export const POST = async (request: Request): Promise<Response> => {
       throw new Error('missing stripe-signature header');
     }
 
-    const event = stripe.webhooks.constructEvent(body, signature, secret);
+    const event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      env.STRIPE_WEBHOOK_SECRET
+    );
 
     switch (event.type) {
       case 'checkout.session.completed': {

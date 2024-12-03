@@ -1,13 +1,15 @@
+import { analytics } from '@repo/analytics/posthog/server';
 import type {
   DeletedObjectJSON,
   OrganizationJSON,
   OrganizationMembershipJSON,
   UserJSON,
   WebhookEvent,
-} from '@clerk/nextjs/server';
-import { log } from '@logtail/next';
-import { analytics } from '@repo/design-system/lib/analytics/server';
+} from '@repo/auth/server';
+import { env } from '@repo/env';
+import { log } from '@repo/observability/log';
 import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 
 const handleUserCreated = (data: UserJSON) => {
@@ -139,10 +141,8 @@ const handleOrganizationMembershipDeleted = (
 };
 
 export const POST = async (request: Request): Promise<Response> => {
-  if (!process.env.CLERK_WEBHOOK_SECRET) {
-    throw new Error(
-      'Please add process.env.CLERK_WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local'
-    );
+  if (!env.CLERK_WEBHOOK_SECRET) {
+    return NextResponse.json({ message: 'Not configured', ok: false });
   }
 
   // Get the headers
@@ -163,14 +163,13 @@ export const POST = async (request: Request): Promise<Response> => {
   const body = JSON.stringify(payload);
 
   // Create a new SVIX instance with your secret.
-  const wh = new Webhook(process.env.CLERK_WEBHOOK_SECRET);
+  const webhook = new Webhook(env.CLERK_WEBHOOK_SECRET);
 
-  // eslint-disable-next-line no-undef-init
   let event: WebhookEvent | undefined;
 
   // Verify the payload with the headers
   try {
-    event = wh.verify(body, {
+    event = webhook.verify(body, {
       'svix-id': svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
